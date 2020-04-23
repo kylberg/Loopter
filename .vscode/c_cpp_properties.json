@@ -3,6 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "\\\\vironova.com\\root\\Users\\GustafK\\Documents\\Arduino\\libraries\\TinyStepper_28BYJ_48\\src",
                 "\\\\vironova.com\\root\\Users\\GustafK\\Documents\\Arduino\\libraries\\AccelStepper",
                 "C:\\Program Files (x86)\\Arduino\\tools\\**",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",

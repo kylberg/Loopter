@@ -1,36 +1,114 @@
-/* Example sketch to control a 28BYJ-48 stepper motor with ULN2003 driver board, AccelStepper and Arduino UNO: acceleration and deceleration. More info: https://www.makerguides.com */
-// Include the AccelStepper library:
-#include <AccelStepper.h>
-// Motor pin definitions:
-#define motorPin1  8      // IN1 on the ULN2003 driver
-#define motorPin2  9      // IN2 on the ULN2003 driver
-#define motorPin3  10     // IN3 on the ULN2003 driver
-#define motorPin4  11     // IN4 on the ULN2003 driver
-// Define the AccelStepper interface type; 4 wire motor in half step mode:
-#define MotorInterfaceType 8
-// Initialize with pin sequence IN1-IN3-IN2-IN4 for using the AccelStepper library with 28BYJ-48 stepper motor:
-AccelStepper stepper = AccelStepper(MotorInterfaceType, motorPin1, motorPin3, motorPin2, motorPin4);
-void setup() {
-  // Set the maximum steps per second:
-  stepper.setMaxSpeed(1500);
-  // Set the maximum acceleration in steps per second^2:
-  stepper.setAcceleration(500);
-}
-void loop() {
 
-  for (int i = 1; i <= 40; i++) {
-    // Set target position:
-    stepper.moveTo(i*100);
-    // Run to position with set speed and acceleration:
-    stepper.runToPosition();
+
+/* Example sketch to control a 28BYJ-48 stepper motor with ULN2003 driver board, AccelStepper and Arduino UNO: acceleration and deceleration. More info: https://www.makerguides.com */
+// Include new stepper library:
+#include <TinyStepper_28BYJ_48.h>
+
+// Motor pin assignment:
+
+const int MOTOR_IN1_PIN = 8;
+const int MOTOR_IN2_PIN = 9;
+const int MOTOR_IN3_PIN = 10;
+const int MOTOR_IN4_PIN = 11;
+
+const int LEFT_LIMIT_PIN = 2;
+const int RIGHT_LIMIT_PIN = 3;
+
+//
+// create the stepper motor object
+//
+TinyStepper_28BYJ_48 stepper;
+
+
+
+void setup() 
+{
+  //
+  // setup the LED pin, stop button pin and enable print statements
+  //
+  // pinMode(LED_PIN, OUTPUT);   
+  pinMode(LEFT_LIMIT_PIN, INPUT_PULLUP);
+  pinMode(RIGHT_LIMIT_PIN, INPUT_PULLUP);
+  Serial.begin(9600);
+
+
+  //
+  // connect and configure the stepper motor to its IO pins
+  //
+ stepper.connectToPins(MOTOR_IN1_PIN, MOTOR_IN2_PIN, MOTOR_IN3_PIN, MOTOR_IN4_PIN);
+}
+
+
+
+void loop() 
+{
+  //
+  // set the speed and acceleration rates for the stepper motor
+  //
+  stepper.setSpeedInStepsPerSecond(550);
+  stepper.setAccelerationInStepsPerSecondPerSecond(550);
+
+
+  //
+  // set the motor's current positon to 0 and turn off the LED
+  //
+  stepper.setCurrentPositionInSteps(0);
+
+  bool stopFlag = false;
+
+
+  //
+  // setup the motor so that it will rotate 10 turns, note: this 
+  // command does not start moving yet
+  //
+  stepper.setupMoveInSteps(2048 * 10);
+  
+
+  //
+  // now execute the move, looping until the motor has finished
+  //
+    Serial.println("START ");
+  while(!stepper.motionComplete())
+  {
+    //
+    // Note: The code added to this loop must execute VERY fast.  
+    // Perhaps no longer than 0.05 milliseconds.
+    //
     
-    delay(1000);
+    //
+    // process motor steps
+    //
+    stepper.processMovement();
     
-    // Move back to original position:
-    stepper.moveTo(0);
-    // Run to position with set speed and acceleration:
-    stepper.runToPosition();
-    
-    delay(1000);
+    //
+    // check if motor has moved past position 2048, if so turn On the LED
+    //
+
+    if(stepper.getCurrentPositionInSteps()%2048==0){
+      Serial.print("Step ");
+      Serial.println(stepper.getCurrentPositionInSteps());
+    }   
+
+    //
+    // check if the user has pressed the "Stop" button, if so decelerate to a stop
+    //
+    if ((digitalRead(LFFT_LIMIT_PIN) == LOW) && (stopFlag == false))
+    {
+      Serial.println("-- STOP, left limit reached --");
+      stepper.setupStop();
+      stopFlag = true;
+    }
+    if ((digitalRead(RIGHT_LIMIT_PIN) == LOW) && (stopFlag == false))
+    {
+      Serial.println("-- STOP, right limit reached --");
+      stepper.setupStop();
+      stopFlag = true;
+    }
   }
+
+
+  //
+  // delay before starting again
+  //
+  delay(4000);
 }
